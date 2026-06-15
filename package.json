@@ -1,0 +1,33 @@
+{
+  "name": "cookies-shop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "bun run scripts/dev.ts",
+    "dev:api": "bun run --filter '@cookies/api' dev",
+    "dev:web": "bun run --filter '@cookies/web' dev",
+    "build": "bun run --filter '@cookies/web' build",
+    "start": "bun run --filter '@cookies/api' start",
+    "typecheck": "bun run --filter '@cookies/shared' typecheck && bun run --filter '@cookies/api' typecheck && bun run --filter '@cookies/web' typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "bun run --filter '@cookies/api' test",
+    "db:generate": "bun run --filter '@cookies/api' db:generate",
+    "db:migrate": "bun run --filter '@cookies/api' db:migrate",
+    "db:seed": "bun run --filter '@cookies/api' db:seed",
+    "db:reset": "bun run --filter '@cookies/api' db:reset",
+    "ci": "bun run lint && bun run typecheck && bun run test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "typescript": "5.7.2"
+  },
+  "engines": {
+    "bun": ">=1.1.0",
+    "node": ">=20"
+  },
+  "trustedDependencies": ["@biomejs/biome"]
+}

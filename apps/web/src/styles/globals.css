@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 38 36% 96%;
+    --foreground: 28 38% 14%;
+    --card: 38 50% 99%;
+    --card-foreground: 28 38% 14%;
+    --popover: 38 50% 99%;
+    --popover-foreground: 28 38% 14%;
+    --primary: 28 38% 22%;
+    --primary-foreground: 38 60% 96%;
+    --secondary: 32 36% 88%;
+    --secondary-foreground: 28 38% 22%;
+    --muted: 32 32% 90%;
+    --muted-foreground: 28 14% 38%;
+    --accent: 30 45% 60%;
+    --accent-foreground: 28 38% 18%;
+    --destructive: 9 60% 45%;
+    --destructive-foreground: 38 60% 96%;
+    --border: 32 30% 84%;
+    --input: 32 30% 84%;
+    --ring: 28 38% 22%;
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 28 22% 8%;
+    --foreground: 38 30% 90%;
+    --card: 28 22% 12%;
+    --card-foreground: 38 30% 90%;
+    --popover: 28 22% 12%;
+    --popover-foreground: 38 30% 90%;
+    --primary: 38 30% 90%;
+    --primary-foreground: 28 38% 14%;
+    --secondary: 28 22% 18%;
+    --secondary-foreground: 38 30% 90%;
+    --muted: 28 22% 18%;
+    --muted-foreground: 38 14% 64%;
+    --accent: 30 45% 60%;
+    --accent-foreground: 28 38% 14%;
+    --destructive: 9 60% 45%;
+    --destructive-foreground: 38 30% 90%;
+    --border: 28 22% 22%;
+    --input: 28 22% 22%;
+    --ring: 38 30% 90%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv11";
+    background-image: radial-gradient(rgba(120, 80, 50, 0.03) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent) / 0.4);
+  }
+}
+
+@layer components {
+  .ornate-divider {
+    background-image: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
+    height: 1px;
+    width: 100%;
+  }
+
+  .paper-card {
+    @apply relative rounded-lg border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md;
+  }
+}

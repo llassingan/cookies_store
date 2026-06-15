@@ -1,0 +1,15 @@
+services:
+  cookies_postgres:
+    image: postgres:17
+    container_name: cookies_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: cookies
+    ports:
+      - "5455:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
