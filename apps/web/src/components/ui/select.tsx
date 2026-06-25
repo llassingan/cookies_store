@@ -1,9 +1,29 @@
+/**
+ * Select Dropdown
+ *
+ * Shadcn-style select component wrapping Radix UI's Select primitive.
+ * Provides an accessible dropdown with keyboard navigation, scroll
+ * buttons, and a checkmark indicator on the selected item.
+ *
+ * Exported sub-components: Select, SelectGroup, SelectValue,
+ * SelectTrigger, SelectContent, SelectItem.
+ *
+ * Used in the admin orders table for the status transition dropdown
+ * where the baker selects the next bake-night state.
+ *
+ * This component follows the shadcn/ui pattern: Radix primitives
+ * (`@radix-ui/react-select`) + Tailwind CSS + Lucide icons.
+ *
+ * @requires 'use client' — Radix Select relies on browser APIs.
+ */
 'use client';
 import { cn } from '@/lib/utils';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import * as React from 'react';
 
+// Re-export Radix primitives so consumers don't need to import
+// from @radix-ui/react-select.
 const Select = SelectPrimitive.Root;
 const SelectGroup = SelectPrimitive.Group;
 const SelectValue = SelectPrimitive.Value;

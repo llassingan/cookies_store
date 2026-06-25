@@ -1,3 +1,17 @@
+/**
+ * Card
+ *
+ * Shadcn-style card component suite. Exports Card, CardHeader,
+ * CardTitle, CardDescription, CardContent, and CardFooter.
+ *
+ * Cards are the primary content containers in the admin dashboard:
+ * KPI panels, bake night grids, menu item lists, and settings forms
+ * all use Card sub-components.
+ *
+ * This component follows the shadcn/ui pattern: pure HTML elements
+ * with Tailwind CSS. No Radix primitives are needed for this layout
+ * component.
+ */
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 

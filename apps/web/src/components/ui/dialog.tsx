@@ -1,9 +1,30 @@
+/**
+ * Dialog (Modal)
+ *
+ * Shadcn-style dialog/modal component wrapping Radix UI's Dialog
+ * primitive. Provides a lightweight overlay modal with animation
+ * support (zoom-in/out, fade-in/out).
+ *
+ * Exported sub-components: Dialog, DialogPortal, DialogOverlay,
+ * DialogTrigger, DialogClose, DialogContent, DialogHeader,
+ * DialogTitle, DialogDescription, DialogFooter.
+ *
+ * Used in the admin dashboard for the order status transition dialog
+ * and the menu item create/edit dialogs.
+ *
+ * This component follows the shadcn/ui pattern: Radix primitives
+ * (`@radix-ui/react-dialog`) + Tailwind CSS animations.
+ *
+ * @requires 'use client' — Radix Dialog relies on browser APIs.
+ */
 'use client';
 import { cn } from '@/lib/utils';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import * as React from 'react';
 
+// Re-export Radix primitives directly so consumers don't need to import
+// from @radix-ui/react-dialog themselves.
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;

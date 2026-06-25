@@ -1,3 +1,20 @@
+/**
+ * Toggle Switch
+ *
+ * Shadcn-style toggle switch component wrapping Radix UI's Switch
+ * primitive. Renders an accessible on/off toggle with a sliding thumb,
+ * focus ring, and smooth CSS transitions.
+ *
+ * Used in the admin dashboard for:
+ * - Menu item availability toggle (Live / Hidden)
+ * - Shop open/close master toggle in settings
+ * - Menu item "Available" switch in create/edit dialogs
+ *
+ * This component follows the shadcn/ui pattern: Radix primitives
+ * (`@radix-ui/react-switch`) + Tailwind CSS.
+ *
+ * @requires 'use client' — Radix Switch relies on browser APIs.
+ */
 'use client';
 import { cn } from '@/lib/utils';
 import * as SwitchPrimitives from '@radix-ui/react-switch';

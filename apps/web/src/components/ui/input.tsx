@@ -1,3 +1,15 @@
+/**
+ * Input
+ *
+ * Shadcn-style text input component. A styled HTML `<input>` element
+ * with Tailwind CSS for consistent form styling across the application.
+ * Supports all native input types (text, number, password, etc).
+ *
+ * Used in admin login form, settings form, and menu item forms.
+ *
+ * This component follows the shadcn/ui pattern: pure HTML elements
+ * with Tailwind CSS facades. No Radix primitives needed.
+ */
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 

@@ -1,3 +1,17 @@
+/**
+ * Button
+ *
+ * Shadcn-style button component with class-variance-authority (cva)
+ * variants for size and visual style. Supports rendering as a child
+ * element via Radix UI's `Slot` primitive (the `asChild` prop),
+ * enabling use as a link wrapper without nested `<a>`/`<button>`.
+ *
+ * Variants: default, secondary, outline, ghost, destructive, link.
+ * Sizes: default, sm, lg, icon.
+ *
+ * This component follows the shadcn/ui pattern: Radix primitives
+ * (`@radix-ui/react-slot`) + Tailwind CSS + cva.
+ */
 import { cn } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
 import { type VariantProps, cva } from 'class-variance-authority';

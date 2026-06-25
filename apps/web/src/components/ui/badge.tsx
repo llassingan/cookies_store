@@ -1,3 +1,16 @@
+/**
+ * Badge
+ *
+ * Shadcn-style badge component with class-variance-authority (cva)
+ * variants. Used throughout the admin dashboard for status indicators:
+ * order statuses in the orders table, payment status, menu item
+ * visibility, and other label contexts.
+ *
+ * Variants: default, secondary, outline, success, warning, danger, info.
+ *
+ * This component follows the shadcn/ui pattern: pure HTML elements
+ * with Tailwind CSS classes orchestrated by `cva`.
+ */
 import { cn } from '@/lib/utils';
 import { type VariantProps, cva } from 'class-variance-authority';
 import type * as React from 'react';

@@ -1,3 +1,19 @@
+/**
+ * Table
+ *
+ * Shadcn-style table component suite. Exports Table, TableHeader,
+ * TableBody, TableRow, TableHead, and TableCell.
+ *
+ * Provides responsive tables with horizontal scroll support (the root
+ * Table component wraps in an `overflow-auto` container). Table rows
+ * have hover highlights. Header cells use uppercase tracking-wide text
+ * for a professional data-table look.
+ *
+ * Used in the admin dashboard for the orders data table.
+ *
+ * This component follows the shadcn/ui pattern: pure HTML table
+ * elements with Tailwind CSS. No Radix primitives needed.
+ */
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 

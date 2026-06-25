@@ -1,3 +1,16 @@
+/**
+ * Textarea
+ *
+ * Shadcn-style textarea component. A styled HTML `<textarea>` element
+ * with Tailwind CSS for multi-line text input. Matches the Input
+ * component's visual style for consistent form presentation.
+ *
+ * Used in the admin menu form for the cookie description field, which
+ * supports up to 2000 characters of flavor and ingredient notes.
+ *
+ * This component follows the shadcn/ui pattern: pure HTML elements
+ * with Tailwind CSS facades. No Radix primitives needed.
+ */
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 
