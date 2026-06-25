@@ -1,4 +1,26 @@
 'use client';
+/**
+ * Maison Croûte — Checkout Form Page
+ *
+ * Step 3 of the customer flow: / -> /cart -> /checkout -> /order/[id] -> /order/track.
+ *
+ * This is a **client component** (`"use client"`) because it uses:
+ * - `react-hook-form` + `@hookform/resolvers/zod` for form state management and validation.
+ * - Zustand cart store to read the current lines and fulfillment choice.
+ * - `useRouter` to redirect to `/cart` if the cart is empty, or to `/order/[id]` on success.
+ * - `useEffect` to fetch a fresh quote on mount and whenever fulfillment changes.
+ *
+ * The checkout flow:
+ * 1. Fetches a quote (same `/public/cart/quote` endpoint as the cart page) to confirm
+ *    the total and ensure the order is still placeable.
+ * 2. Validates customer info with a Zod schema (name, email, phone, optional address + notes).
+ * 3. On submit, generates an **idempotency key** and POSTs to `/public/orders`.
+ * 4. Clears the cart and navigates to the thank-you page (`/order/[id]?ref=...`).
+ *
+ * Idempotency key: prevents double-submission. If the user's network drops after the POST
+ * succeeds but before the redirect, a resubmission with the same key will return the original
+ * order instead of creating a duplicate.
+ */
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,6 +37,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+// Zod schema mirrors the API's customer validation contract.
+// Address is only required when fulfillment === 'delivery', enforced via the conditional field render.
 const Schema = z.object({
   name: z.string().min(1, 'Please tell us your name').max(120),
   email: z.string().email('Please use a valid email'),
@@ -32,6 +56,8 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // On mount, redirect to /cart if the basket is empty (e.g. the user navigated directly to /checkout).
+  // Otherwise fetch a fresh quote so the summary reflects the latest cart state.
   useEffect(() => {
     if (lines.length === 0) {
       router.replace('/cart');
@@ -64,6 +90,8 @@ export default function CheckoutPage() {
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitting(true);
     setError(null);
+    // Idempotency key: `ck_` prefix + crypto.randomUUID(). Falls back to timestamp + random
+    // for environments where crypto.randomUUID is unavailable (unlikely in modern browsers).
     const idempotencyKey =
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? `ck_${crypto.randomUUID()}`
@@ -75,7 +103,10 @@ export default function CheckoutPage() {
         customer: values,
         idempotencyKey,
       });
+      // Clear the Zustand store so the cart badge disappears and the cart page shows empty.
       clear();
+      // Navigate to the thank-you page with the paymentReference as a query param
+      // so the mock-pay button can reference it.
       router.push(`/order/${res.orderId}?ref=${res.paymentReference}`);
     } catch (e) {
       if (e instanceof ApiClientError) {
@@ -115,6 +146,7 @@ export default function CheckoutPage() {
           <Field label="Email" error={form.formState.errors.email?.message}>
             <Input type="email" {...form.register('email')} placeholder="you@email.com" />
           </Field>
+          {/* Delivery address field only renders when the user chose 'delivery' on the cart page. */}
           {fulfillment === 'delivery' ? (
             <Field label="Delivery address" error={form.formState.errors.address?.message}>
               <Textarea
@@ -147,6 +179,7 @@ export default function CheckoutPage() {
         </form>
       </div>
       <div>
+        {/* Same sticky summary card pattern as /cart for consistency across the flow. */}
         <Card className="sticky top-20">
           <CardHeader>
             <CardTitle>You’re ordering</CardTitle>
@@ -174,6 +207,7 @@ export default function CheckoutPage() {
             ) : null}
           </CardContent>
           <CardFooter>
+            {/* Reassurance text: Maison Croûte never stores raw card details; the payment gateway handles them. */}
             <p className="text-xs text-muted-foreground">
               Payment is processed by our gateway. We never store your card details.
             </p>
@@ -184,6 +218,7 @@ export default function CheckoutPage() {
   );
 }
 
+/** Form field wrapper: renders a label, the input children, and an inline validation error. */
 function Field({
   label,
   error,
@@ -198,6 +233,7 @@ function Field({
   );
 }
 
+/** Reusable summary row for key-value pairs in the quote breakdown. */
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
     <div className="flex items-center justify-between">

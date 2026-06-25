@@ -1,4 +1,20 @@
 'use client';
+/**
+ * Maison Croûte — Order Tracking Form
+ *
+ * Client component (`"use client"`) that renders the order lookup form at `/order/track`.
+ *
+ * Features:
+ * - A search input pre-filled from the `?ref=` query parameter (e.g. when linked from the
+ *   confirmation page or email).
+ * - On submit, fetches the order from `/public/orders/:ref` and displays a result card with:
+ *   - Order number, placed date, status badge (colour-coded by {@link STATUS_VARIANT})
+ *   - Fulfillment, payment status, estimated ready time, total
+ *   - Line items
+ *   - Link to `/order/[id]` for the full confirmation view
+ * - Friendly error message when the order number is not found ("not_found" maps to a
+ *   user-readable message instead of a raw error code).
+ */
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +28,14 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
+/**
+ * Maps the order status (`Order['status']`) to a Badge variant for semantic colour-coding:
+ * - warning (amber): awaiting_payment, baking
+ * - info (blue): paid, queued
+ * - success (green): ready
+ * - secondary (neutral): completed
+ * - danger (red): cancelled
+ */
 const STATUS_VARIANT: Record<
   Order['status'],
   'default' | 'warning' | 'info' | 'success' | 'danger' | 'secondary'
@@ -27,6 +51,7 @@ const STATUS_VARIANT: Record<
 
 export function TrackForm() {
   const search = useSearchParams();
+  // Pre-fill the input from the ?ref= query param (used by deep links from email or confirmation page).
   const initial = search.get('ref') ?? '';
   const [ref, setRef] = useState(initial);
   const [order, setOrder] = useState<Order | null>(null);
@@ -40,10 +65,12 @@ export function TrackForm() {
     setError(null);
     setOrder(null);
     try {
+      // The API accepts both the order ID (UUID) and the human-friendly order number (CK...).
       const res = await api.get<Order>(`/public/orders/${encodeURIComponent(ref.trim())}`);
       setOrder(res);
     } catch (e) {
       if (e instanceof ApiClientError)
+        // "not_found" is the most common error for a mistyped order number — give a clear message.
         setError(
           e.code === 'not_found'
             ? 'No order with that number was found.'
@@ -87,6 +114,7 @@ export function TrackForm() {
                 Placed on {formatDateTime(order.createdAt)}
               </p>
             </div>
+            {/* Status badge: e.g. "awaiting_payment" -> "awaiting payment" (underscores replaced with spaces). */}
             <Badge variant={STATUS_VARIANT[order.status]}>
               {order.status.replaceAll('_', ' ')}
             </Badge>
@@ -121,6 +149,7 @@ export function TrackForm() {
   );
 }
 
+/** Small labelled info block used in the order summary grid. */
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>

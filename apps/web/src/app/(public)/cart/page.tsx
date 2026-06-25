@@ -1,4 +1,26 @@
 'use client';
+/**
+ * Maison Croûte — Shopping Cart Page
+ *
+ * Step 2 of the customer flow: / -> /cart -> /checkout -> /order/[id] -> /order/track.
+ *
+ * This is a **client component** (`"use client"`) because it needs:
+ * - Stateful cart interactions (quantity +/-, remove, clear, fulfillment toggle) via Zustand.
+ * - The `useEffect` hook for debounced quote fetching on cart changes.
+ * - The AbortController pattern to cancel in-flight quote requests when the user rapidly
+ *   changes quantities.
+ *
+ * Key behaviours:
+ * - **Debounced quote**: 250ms after the last cart change, calls `/public/cart/quote` to get
+ *   a live subtotal, delivery fee, total, estimated ready date, and any blocking reasons
+ *   (capacity full, shop closed, etc.).
+ * - **Empty state**: when the cart has zero lines, renders a friendly "Your basket is empty"
+ *   message with a link back to the menu.
+ * - **Fulfillment toggle** (pickup / delivery) re-fetches the quote so the delivery fee and
+ *   estimated date update in real time.
+ * - **Checkout gate**: the "Continue to checkout" button is disabled when the quote is still
+ *   loading or when the cart is blocked (e.g. fully booked).
+ */
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiClientError, api } from '@/lib/api';
@@ -15,6 +37,9 @@ export default function CartPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Debounced quote fetch: every time `lines` or `fulfillment` changes, we wait 250ms
+  // before hitting the API. If the user keeps tapping +/- the previous request is aborted
+  // and the timer resets — this avoids flooding the server with rapid intermediate states.
   useEffect(() => {
     if (lines.length === 0) {
       setQuote(null);
@@ -35,6 +60,7 @@ export default function CartPage() {
         );
         setQuote(res);
       } catch (e) {
+        // Aborted requests are intentional (user changed input), not real errors.
         if (controller.signal.aborted) return;
         if (e instanceof ApiClientError) setError(`${e.code}: ${e.message}`);
         else setError((e as Error).message);
@@ -73,6 +99,7 @@ export default function CartPage() {
           {lines.map((line) => (
             <Card key={line.menuItemId}>
               <CardContent className="flex items-center gap-4 p-4">
+                {/* CSS-only cookie placeholder — avoids loading external images for a POC. */}
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-cream-200 to-cream-100">
                   <span className="font-display text-2xl">🍪</span>
                 </div>
@@ -90,6 +117,7 @@ export default function CartPage() {
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
+                  {/* tabular-nums prevents the width from jumping when digit counts change. */}
                   <span className="w-8 text-center font-display text-xl tabular-nums">
                     {line.quantity}
                   </span>
@@ -124,6 +152,7 @@ export default function CartPage() {
       </div>
 
       <div>
+        {/* sticky top-20: keeps the summary visible as the user scrolls through a large cart. */}
         <Card className="sticky top-20">
           <CardHeader>
             <CardTitle>Order summary</CardTitle>
@@ -133,6 +162,7 @@ export default function CartPage() {
               <p className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
                 Fulfillment
               </p>
+              {/* Pickup / Delivery toggle: fires setFulfillment which triggers the useEffect quote refresh. */}
               <div className="grid grid-cols-2 gap-2">
                 {(['pickup', 'delivery'] as const).map((f) => (
                   <button
@@ -159,12 +189,14 @@ export default function CartPage() {
                 ) : null}
                 <Row label="Total" value={formatRupiah(quote.total)} bold />
                 <div className="ornate-divider mt-4" />
+                {/* crossesCutoff: true when the order was placed after 17:00 — bumped to H+2. */}
                 <p className="text-sm text-foreground/80">
                   Ready on <strong>{quote.estimatedReadyDate}</strong>{' '}
                   {quote.crossesCutoff ? (
                     <span className="text-muted-foreground">(after today’s cutoff)</span>
                   ) : null}
                 </p>
+                {/* blockedReason is non-null when the shop is full, closed, or any other reject reason. */}
                 {quote.blockedReason ? (
                   <p className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-destructive">
                     {quote.blockedReason}
@@ -190,6 +222,7 @@ export default function CartPage() {
             </Button>
           </CardFooter>
         </Card>
+        {/* Secondary estimated-ready timestamp using en-GB locale for a European date format. */}
         {quote && !quote.blockedReason ? (
           <p className="mt-3 text-center text-xs text-muted-foreground">
             Estimated ready:{' '}
@@ -204,6 +237,7 @@ export default function CartPage() {
   );
 }
 
+/** Reusable summary row for key-value pairs in the quote breakdown. */
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
     <div className="flex items-center justify-between">
