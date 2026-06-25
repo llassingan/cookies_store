@@ -1,3 +1,33 @@
+# =============================================================================
+# Maison Croûte (House of Crust) — Local Development Database
+# =============================================================================
+#
+# This docker-compose file spins up a Postgres 17 instance for local
+# development. The container is named "cookies_postgres" so you can stop,
+# restart, or inspect it easily with `docker ps` or `docker logs
+# cookies_postgres`.
+#
+# Quick facts:
+#   Database name:  cookies
+#   Username:       postgres
+#   Password:       password
+#   Host port:      5455  (mapped to container port 5432)
+#
+# The port 5455 was chosen to avoid colliding with any other Postgres
+# instance you may have running locally on 5432.
+#
+# Data persists across restarts via a named volume (postgres_data). To
+# wipe everything and start fresh, run:
+#
+#     docker compose down -v
+#     docker compose up -d
+#
+# Usage:
+#     docker compose up -d       # start in background
+#     docker compose down        # stop + remove container (data kept)
+#     docker compose down -v     # stop + remove container + wipe data
+# =============================================================================
+
 services:
   cookies_postgres:
     image: postgres:17
@@ -7,9 +37,9 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: cookies
     ports:
-      - "5455:5432"
+      - "5455:5432"            # Host 5455 → Container 5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
+  postgres_data:               # Named volume — persists data across container restarts
