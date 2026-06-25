@@ -1,3 +1,17 @@
+/**
+ * Maison Croûte — Capacity Notice
+ *
+ * Server component that renders a three-column info banner below the hero on the home page.
+ * Each column is a {@link Notice} block with an icon, title, and body text:
+ *
+ * - **Twenty cookies a day** (CalendarDays icon): the bakery's small-batch constraint.
+ * - **Orders close at 17:00** (Clock icon): the daily cutoff rule in Asia/Jakarta time.
+ * - **Pickup or delivery** (Truck icon): fulfillment options available to the customer.
+ *
+ * These three facts are the most important business rules a first-time visitor needs to
+ * understand before browsing the menu, so they're placed prominently above the fold.
+ * The `rounded-2xl` card with `bg-card` gives it enough presence without competing with the hero.
+ */
 import { CalendarDays, Clock, Truck } from 'lucide-react';
 
 export function CapacityNotice() {
@@ -24,9 +38,11 @@ export function CapacityNotice() {
   );
 }
 
+/** Single notice row: circular icon container + two-line text block. */
 function Notice({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
     <div className="flex gap-3">
+      {/* Circular icon background: matches the "M" monogram style for visual consistency. */}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-accent-foreground">
         {icon}
       </div>
