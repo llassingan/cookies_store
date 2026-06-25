@@ -1,3 +1,44 @@
+/**
+ * Orders Data Table & Status Dialog (Client Component)
+ *
+ * The primary order management interface for the Maison Croûte baker.
+ *
+ * **Table columns:**
+ * - **Order** — order number (monospaced, linked via the dialog)
+ * - **Customer** — name and phone number
+ * - **Status** — color-coded badge reflecting the current bake-night state
+ * - **Payment** — payment status badge (paid / pending)
+ * - **Items** — total cookie quantity across line items
+ * - **Total** — order total in IDR
+ * - **Ready** — estimated ready time (formatted datetime)
+ * - **Open** — button that opens the status transition dialog
+ *
+ * **Bake-night state machine:**
+ *   The `NEXT_STATUS` lookup defines valid transitions for each order
+ *   status. The baker selects the next status from a dropdown in the
+ *   dialog. Allowed transitions:
+ *
+ *   ```
+ *   awaiting_payment  →  cancelled
+ *   paid              →  queued, baking, cancelled
+ *   queued            →  baking, cancelled
+ *   baking            →  ready, cancelled
+ *   ready             →  completed, cancelled
+ *   completed         →  (terminal)
+ *   cancelled         →  (terminal)
+ *   ```
+ *
+ *   Cancelling is always available until the order reaches `completed`.
+ *   Both `completed` and `cancelled` are terminal states with no further
+ *   transitions.
+ *
+ * **Status badge color mapping** uses the same `STATUS_VARIANT` record
+ *   found in `client.tsx`: awaiting_payment/paid are warning/info,
+ *   queued is info, baking is warning, ready is success, completed is
+ *   secondary, cancelled is danger.
+ *
+ * @module admin/orders-table
+ */
 'use client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,6 +72,7 @@ import type { Order, OrderStatus } from '@cookies/shared';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+// Color-codes each order status for the Badge component.
 const STATUS_VARIANT: Record<
   Order['status'],
   'default' | 'warning' | 'info' | 'success' | 'danger' | 'secondary'
@@ -44,6 +86,8 @@ const STATUS_VARIANT: Record<
   cancelled: 'danger',
 };
 
+// Defines the allowed status transitions for the bake-night state machine.
+// An empty array means the status is terminal (no further moves possible).
 const NEXT_STATUS: Record<Order['status'], OrderStatus[]> = {
   awaiting_payment: ['cancelled'],
   paid: ['queued', 'baking', 'cancelled'],
@@ -54,21 +98,34 @@ const NEXT_STATUS: Record<Order['status'], OrderStatus[]> = {
   cancelled: [],
 };
 
+/**
+ * Orders data table with inline status transition dialog.
+ *
+ * @param orders - Pre-fetched list of orders from the server
+ * @param initialFocusId - If provided, auto-opens the detail dialog for
+ *   this order (used when navigating from the dashboard overview via the
+ *   `?focus=` query parameter)
+ */
 export function OrdersTable({
   orders: initial,
   initialFocusId,
 }: { orders: Order[]; initialFocusId: string | null }) {
   const [orders, setOrders] = useState(initial);
+  // The order currently open in the status transition dialog.
   const [active, setActive] = useState<Order | null>(null);
+  // The next status the baker has selected from the dropdown.
   const [nextStatus, setNextStatus] = useState<OrderStatus | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // When navigating from another page with ?focus=<id>, find the matching
+  // order and open its dialog automatically.
   useEffect(() => {
     if (!initialFocusId) return;
     const found = orders.find((o) => o.id === initialFocusId);
     if (found) setActive(found);
   }, [initialFocusId, orders]);
 
+  // PATCH the order status to the API and update local state optimistically.
   const apply = async () => {
     if (!active || !nextStatus) return;
     setSaving(true);
@@ -76,6 +133,8 @@ export function OrdersTable({
       const updated = await api.patch<Order>(`/admin/orders/${active.id}/status`, {
         status: nextStatus,
       });
+      // Synchronize local state with the API response to show the
+      // updated status immediately without a full page reload.
       setOrders((cur) => cur.map((o) => (o.id === updated.id ? updated : o)));
       setActive(updated);
       toast.success(`Order ${updated.orderNumber} is now ${updated.status.replaceAll('_', ' ')}.`);

@@ -1,3 +1,31 @@
+/**
+ * Shop Settings Form (Client Component)
+ *
+ * Interactive form that lets the baker modify all operational parameters.
+ *
+ * **Form fields:**
+ * - **Master open/close toggle** (`isOpen`) — switch that controls whether
+ *   the storefront accepts new orders. When closed, customers see a banner.
+ * - **Daily capacity** (`dailyCapacity`) — maximum cookies per bake day
+ *   (1-1000). This is the hard cap the capacity engine enforces per date.
+ * - **Cutoff hour** (`orderCutoffHour`) — 24-hour time (0-23) in the shop's
+ *   timezone. Orders placed after this hour are scheduled for H+2 instead of
+ *   H+1. Default is 17 (5pm).
+ * - **Max queue days** (`maxQueueDays`) — how many days ahead customers can
+ *   book (1-30). Controls the capacity lookahead window. Combined with
+ *   daily capacity, this determines the total pipeline capacity.
+ * - **Delivery fee** (`deliveryFee`) — flat fee in IDR for delivery
+ *   fulfillment (non-negative integer).
+ * - **Closed dates** (`closedDates`) — comma-separated YYYY-MM-DD dates.
+ *   These are specific dates the shop is unavailable (e.g., holidays).
+ *   Sundays are auto-closed separately by the backend; they should not be
+ *   included here. The input is parsed into a string array on submit.
+ *
+ * Validation uses a zod schema with coerce-to-number for numeric fields
+ * and a free-text string for closed dates (parsed server-side).
+ *
+ * @module admin/settings-form
+ */
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +40,9 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+// Form validation schema.
+// closedDates is a raw string: it gets parsed into an array of trimmed
+// YYYY-MM-DD strings on submit.
 const Schema = z.object({
   isOpen: z.boolean(),
   dailyCapacity: z.coerce.number().int().positive().max(1000),
@@ -39,6 +70,7 @@ export function SettingsForm({ initial }: { initial: ShopSettings }) {
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitting(true);
     try {
+      // Parse closedDates: split by comma, trim each value, discard blanks.
       const closedDates = values.closedDates
         .split(',')
         .map((s) => s.trim())
@@ -107,6 +139,10 @@ export function SettingsForm({ initial }: { initial: ShopSettings }) {
   );
 }
 
+/**
+ * Shared form field wrapper with label and validation error.
+ * Used for all settings form inputs except the master switch.
+ */
 function Field({
   label,
   error,

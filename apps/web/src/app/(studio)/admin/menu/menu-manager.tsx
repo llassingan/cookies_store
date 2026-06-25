@@ -1,3 +1,34 @@
+/**
+ * Menu Manager Component (Client Component)
+ *
+ * Handles all cookie menu CRUD operations for the Maison Croûte admin.
+ *
+ * **List view:** renders each menu item as a card showing the cookie
+ *   name, description (2-line clamp), formatted price, and an inline
+ *   availability toggle switch. Items marked unavailable show a "Hidden"
+ *   badge and are excluded from the storefront.
+ *
+ * **Add / Edit form fields** (shared between create and edit dialogs):
+ *   - `name` — cookie display name (max 120 chars)
+ *   - `description` — flavor and ingredient notes (max 2000 chars)
+ *   - `price` — integer IDR price (> 0)
+ *   - `imageUrl` — optional URL for the cookie photo (empty string
+ *     converts to null on submit)
+ *   - `sortOrder` — display ordering on the storefront (non-negative
+ *     integer)
+ *   - `available` — toggle controlling storefront visibility
+ *
+ * **Inline availability toggle** immediately PATCHes the item's
+ *   `available` field. The storefront only shows items where
+ *   `available: true`.
+ *
+ * **Delete** shows a browser `confirm()` dialog warning that carts
+ *   referencing the deleted item will be rejected at checkout.
+ *
+ * Form validation uses zod schemas via react-hook-form's zodResolver.
+ *
+ * @module admin/menu-manager
+ */
 'use client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,6 +54,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+// Validation schema for creating a new menu item.
+// imageUrl accepts a URL, empty string (converts to undefined), or omission.
 const CreateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(120),
   description: z.string().min(1, 'Description is required').max(2000),
@@ -37,6 +70,8 @@ const CreateSchema = z.object({
 });
 type CreateValues = z.infer<typeof CreateSchema>;
 
+// Validation schema for updating an existing menu item.
+// All fields are optional: only provided fields will be patched.
 const UpdateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   description: z.string().min(1).max(2000).optional(),
@@ -47,11 +82,19 @@ const UpdateSchema = z.object({
 });
 type UpdateValues = z.infer<typeof UpdateSchema>;
 
+/**
+ * Main menu management component. Maintains local state for the menu
+ * items list and delegates create/edit to child dialog components
+ * (`CreateDialog` and `EditDialog`).
+ */
 export function MenuManager({ initial }: { initial: MenuItem[] }) {
   const [items, setItems] = useState(initial);
+  // The item currently being edited (null = dialog closed).
   const [editing, setEditing] = useState<MenuItem | null>(null);
+  // Whether the create dialog is open.
   const [creating, setCreating] = useState(false);
 
+  // Deletes a menu item after user confirmation.
   const onDelete = async (id: string) => {
     if (!confirm('Delete this item? Existing carts referencing it will be rejected at checkout.'))
       return;
@@ -65,6 +108,7 @@ export function MenuManager({ initial }: { initial: MenuItem[] }) {
     }
   };
 
+  // Toggles an item's availability with an immediate API patch.
   const onToggleAvailable = async (item: MenuItem) => {
     try {
       const updated = await api.patch<MenuItem>(`/admin/menu/${item.id}`, {
@@ -102,6 +146,7 @@ export function MenuManager({ initial }: { initial: MenuItem[] }) {
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2">{i.description}</p>
                 </div>
+                {/* Price in IDR, right-aligned with consistent tabular number width */}
                 <div className="w-24 text-right font-display text-lg tabular-nums">
                   {formatRupiah(i.price)}
                 </div>
@@ -145,6 +190,13 @@ export function MenuManager({ initial }: { initial: MenuItem[] }) {
   );
 }
 
+/**
+ * Dialog for creating a new menu item.
+ *
+ * All fields match the CreateSchema: name, description, price (IDR),
+ * image URL (optional), availability toggle, and sort order.
+ * On success, the new item is appended to the parent's local state.
+ */
 function CreateDialog({
   open,
   onOpenChange,
@@ -165,6 +217,8 @@ function CreateDialog({
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitting(true);
     try {
+      // Map form values to API request body.
+      // Empty imageUrl string becomes null.
       const body: CreateMenuItemRequest = {
         name: values.name,
         description: values.description,
@@ -226,6 +280,14 @@ function CreateDialog({
   );
 }
 
+/**
+ * Dialog for editing an existing menu item.
+ *
+ * Pre-fills all form fields from the selected item. When the dialog
+ * closes, `onClose` resets the parent's `editing` state to null.
+ * On successful save, `onUpdated` replaces the edited item in the
+ * parent's local state.
+ */
 function EditDialog({
   item,
   onClose,
@@ -233,6 +295,7 @@ function EditDialog({
 }: { item: MenuItem | null; onClose: () => void; onUpdated: (i: MenuItem) => void }) {
   const form = useForm<UpdateValues>({ resolver: zodResolver(UpdateSchema) });
   const [submitting, setSubmitting] = useState(false);
+  // Initialize form values when the dialog opens with a new item.
   useState(() => {
     if (item)
       form.reset({
@@ -254,6 +317,8 @@ function EditDialog({
         name: values.name,
         description: values.description,
         price: values.price,
+        // Empty string means "no image" → send null. Otherwise send the
+        // provided URL or undefined (omitted) if the field wasn't changed.
         imageUrl: values.imageUrl === '' ? null : (values.imageUrl ?? undefined),
         available: values.available,
         sortOrder: values.sortOrder,
@@ -320,6 +385,10 @@ function EditDialog({
   );
 }
 
+/**
+ * Shared form field wrapper used by both CreateDialog and EditDialog.
+ * Renders a label, the input element, and a validation error message.
+ */
 function Field({
   label,
   error,

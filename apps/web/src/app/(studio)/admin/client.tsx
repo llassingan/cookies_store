@@ -1,9 +1,26 @@
+/**
+ * Admin Overview Client Component
+ *
+ * This file exists as a client boundary for the admin dashboard overview.
+ * The parent `/admin/page.tsx` is a server component that fetches all data
+ * (sales KPIs, bake nights, recent orders), then passes the recent orders
+ * to this client component for rendering.
+ *
+ * The pattern keeps the heavy data-fetching on the server while allowing
+ * interactive UI (like status badges) to be rendered on the client.
+ *
+ * @module admin/client
+ */
 'use client';
 import { Badge } from '@/components/ui/badge';
 import { formatRupiah } from '@/lib/utils';
 import type { Order } from '@cookies/shared';
 import Link from 'next/link';
 
+// Maps each order status to a Badge variant for color-coding.
+// The status values follow the Maison Croûte order state machine:
+// awaiting_payment → paid → queued → baking → ready → completed
+// (cancelled allowed at any point before completed)
 const STATUS_VARIANT: Record<
   Order['status'],
   'default' | 'warning' | 'info' | 'success' | 'danger' | 'secondary'
@@ -17,6 +34,13 @@ const STATUS_VARIANT: Record<
   cancelled: 'danger',
 };
 
+/**
+ * Renders the recent orders list on the admin dashboard overview.
+ * Each order shows its number (linked to the orders detail view),
+ * customer name, cookie count, status badge, and total in IDR.
+ *
+ * @param orders - The most recent orders, fetched server-side
+ */
 export function AdminOverviewClient({ orders }: { orders: Order[] }) {
   return (
     <ul className="divide-y divide-border/60">
